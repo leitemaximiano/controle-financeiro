@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Controle Financeiro</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script type="module" src="https://unpkg.com/@phosphor-icons/web?module"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <div class="container mx-auto px-4 py-8 max-w-7xl">
+    <!-- Header -->
+    <div class="mb-8 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Controle Financeiro</h1>
+        <p class="text-gray-600" id="currentMonth"></p>
+      </div>
+      <div class="flex flex-wrap items-center gap-3">
+        <button id="btnExportar" class="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+          <ph-download-simple size="18" weight="bold"></ph-download-simple>
+          Exportar
+        </button>
+        <input type="file" id="inputImportar" accept="application/json" class="hidden">
+        <button id="btnImportar" class="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+          <ph-upload-simple size="18" weight="bold"></ph-upload-simple>
+          Importar
+        </button>
+      </div>
+    </div>
+
+    <!-- Indicadores -->
+    <div id="indicadoresContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"></div>
+
+    <!-- Filtros -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+      <div class="flex flex-col lg:flex-row gap-4 items-start lg:items-end justify-between">
+        <div class="flex flex-col sm:flex-row gap-4 flex-1 w-full">
+          <div class="flex-1">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Tipo</label>
+            <select id="filtroTipo" class="w-full px-3 py-2 border rounded-md">
+              <option value="">Todos</option>
+              <option value="entrada">Entrada</option>
+              <option value="saida">Saída</option>
+            </select>
+          </div>
+          <div class="flex-1">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Data</label>
+            <input type="date" id="filtroData" class="w-full px-3 py-2 border rounded-md">
+          </div>
+          <div class="flex-1">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Forma</label>
+            <select id="filtroForma" class="w-full px-3 py-2 border rounded-md">
+              <option value="">Todas</option>
+              <option value="pix">PIX</option>
+              <option value="dinheiro">Dinheiro</option>
+              <option value="cartao_credito">Cartão de Crédito</option>
+              <option value="cartao_debito">Cartão de Débito</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <button id="btnLimparFiltro" class="hidden bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300">
+            Limpar
+          </button>
+          <button id="btnNovaMovimentacao" class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 font-medium">
+            + Nova
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabela (desktop) -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden hidden md:block">
+      <div class="px-6 py-4 border-b">
+        <h2 class="text-lg font-semibold text-gray-900">Movimentações</h2>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full min-w-[600px]">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Data</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Descrição</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Forma</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Valor</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tabelaMovimentacoes" class="divide-y divide-gray-200"></tbody>
+        </table>
+      </div>
+      <div id="emptyStateDesktop" class="hidden px-6 py-12 text-center">
+        <p class="text-gray-500">Nenhuma movimentação encontrada.</p>
+      </div>
+      <div id="paginacaoDesktop" class="flex justify-between items-center px-6 py-4 border-t hidden">
+        <div class="flex items-center gap-2">
+          <span class="text-sm">Exibir</span>
+          <select id="selectRegistros" class="px-2 py-1 border rounded-md text-sm">
+            <option value="2">2</option>
+            <option value="4">4</option>
+            <option value="8" selected>8</option>
+            <option value="10">10</option>
+            <option value="12">12</option>
+          </select>
+          <span class="text-sm">por página</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <button id="btnAnterior" class="px-3 py-1 bg-gray-200 rounded-md disabled:opacity-50">Anterior</button>
+          <span id="infoPaginacao" class="text-sm"></span>
+          <button id="btnProximo" class="px-3 py-1 bg-gray-200 rounded-md disabled:opacity-50">Próximo</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cards (mobile) -->
+    <div id="cardsContainer" class="grid gap-4 md:hidden"></div>
+    <div id="emptyStateMobile" class="hidden px-6 py-12 text-center md:hidden">
+      <p class="text-gray-500">Nenhuma movimentação encontrada.</p>
+    </div>
+    <div id="paginacaoMobile" class="flex flex-col items-center gap-3 mt-4 hidden md:hidden">
+      <div class="flex items-center gap-2">
+        <span class="text-sm">Exibir</span>
+        <select id="selectRegistrosMobile" class="px-2 py-1 border rounded-md text-sm">
+          <option value="2">2</option>
+          <option value="4">4</option>
+          <option value="8" selected>8</option>
+          <option value="10">10</option>
+          <option value="12">12</option>
+        </select>
+      </div>
+      <div class="flex items-center gap-3">
+        <button id="btnAnteriorMobile" class="px-3 py-1 bg-gray-200 rounded-md disabled:opacity-50">Anterior</button>
+        <span id="infoPaginacaoMobile" class="text-sm"></span>
+        <button id="btnProximoMobile" class="px-3 py-1 bg-gray-200 rounded-md disabled:opacity-50">Próximo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Nova Movimentação -->
+  <div id="modalMovimentacao" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+      <h2 class="text-xl font-semibold mb-4">Nova Movimentação</h2>
+      <form id="formMovimentacao" class="space-y-4">
+        <input type="hidden" id="movIndex">
+        <div>
+          <label class="block text-sm font-medium">Tipo</label>
+          <select id="movTipo" class="w-full px-3 py-2 border rounded-md" required>
+            <option value="entrada">Entrada</option>
+            <option value="saida">Saída</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium">Data</label>
+          <input type="date" id="movData" class="w-full px-3 py-2 border rounded-md" required>
+        </div>
+        <div>
+          <label class="block text-sm font-medium">Descrição</label>
+          <input type="text" id="movDescricao" class="w-full px-3 py-2 border rounded-md" required>
+        </div>
+        <div>
+          <label class="block text-sm font-medium">Forma</label>
+          <select id="movForma" class="w-full px-3 py-2 border rounded-md" required>
+            <option value="pix">PIX</option>
+            <option value="dinheiro">Dinheiro</option>
+            <option value="cartao_credito">Cartão de Crédito</option>
+            <option value="cartao_debito">Cartão de Débito</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium">Valor</label>
+          <input type="number" step="0.01" id="movValor" class="w-full px-3 py-2 border rounded-md" required>
+        </div>
+        <div>
+          <label class="block text-sm font-medium">Status</label>
+          <select id="movStatus" class="w-full px-3 py-2 border rounded-md" required>
+            <option value="pago">Pago</option>
+            <option value="pendente">Pendente</option>
+          </select>
+        </div>
+        <div class="flex justify-end gap-3 pt-4">
+          <button type="button" id="btnCancelar" class="px-4 py-2 bg-gray-200 rounded-md">Cancelar</button>
+          <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    class ControleFinanceiro {
+      constructor() {
+        this.movimentacoes = this.carregarMovimentacoes();
+        this.paginaAtual = 1;
+        this.registrosPorPagina = 8;
+        this.inicializar();
+      }
+
+      inicializar() {
+        this.atualizarMesAtual();
+        this.configurarEventos();
+        this.renderizar();
+      }
+
+      carregarMovimentacoes() {
+        return JSON.parse(localStorage.getItem('movimentacoes')||"[]");
+      }
+
+      salvarMovimentacoes() {
+        localStorage.setItem('movimentacoes',JSON.stringify(this.movimentacoes));
+      }
+
+      atualizarMesAtual() {
+        const agora=new Date();
+        const meses=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+        document.getElementById('currentMonth').textContent=`${meses[agora.getMonth()]} ${agora.getFullYear()}`;
+      }
+
+      aplicarFiltros(lista) {
+        const tipo=document.getElementById('filtroTipo').value;
+        const data=document.getElementById('filtroData').value;
+        const forma=document.getElementById('filtroForma').value;
+        let filtrado=lista;
+        if(tipo) filtrado=filtrado.filter(m=>m.tipo===tipo);
+        if(data) filtrado=filtrado.filter(m=>m.data===data);
+        if(forma) filtrado=filtrado.filter(m=>m.forma===forma);
+        document.getElementById('btnLimparFiltro').classList.toggle('hidden',!(tipo||data||forma));
+        return filtrado;
+      }
+
+      calcularIndicadores(movs){
+        const entradas=movs.filter(m=>m.tipo==='entrada').reduce((a,b)=>a+Number(b.valor),0);
+        const saidas=movs.filter(m=>m.tipo==='saida').reduce((a,b)=>a+Number(b.valor),0);
+        const saldo=entradas-saidas;
+        const pendentes=movs.filter(m=>m.tipo==='saida' && m.status==='pendente').reduce((a,b)=>a+Number(b.valor),0);
+
+        const indicadores=[
+          {titulo:'Entradas',valor:entradas,cor:'text-green-600'},
+          {titulo:'Saídas',valor:saidas,cor:'text-red-600'},
+          {titulo:'Saldo',valor:saldo,cor: saldo>=0?'text-green-600':'text-red-600'},
+          {titulo:'Saídas Pendentes',valor:pendentes,cor:'text-orange-600'},
+        ];
+        const cont=document.getElementById('indicadoresContainer');
+        cont.innerHTML=indicadores.map(i=>`
+          <div class="bg-white shadow rounded-lg p-6 text-center">
+            <p class="text-sm text-gray-500">${i.titulo}</p>
+            <p class="text-2xl font-bold ${i.cor}">R$ ${i.valor.toFixed(2)}</p>
+          </div>`).join('');
+      }
+
+      renderizar(){
+        const dados=this.aplicarFiltros(this.movimentacoes);
+        this.calcularIndicadores(dados);
+        this.renderizarDesktop(dados);
+        this.renderizarMobile(dados);
+      }
+
+      renderizarDesktop(dados){
+        const tbody=document.getElementById('tabelaMovimentacoes');
+        const empty=document.getElementById('emptyStateDesktop');
+        const pag=document.getElementById('paginacaoDesktop');
+        if(dados.length===0){
+          tbody.innerHTML="";
+          empty.classList.remove('hidden');
+          pag.classList.add('hidden');
+          return;
+        }
+        empty.classList.add('hidden');
+        const ini=(this.paginaAtual-1)*this.registrosPorPagina;
+        const fim=ini+this.registrosPorPagina;
+        const pageData=dados.slice(ini,fim);
+        tbody.innerHTML=pageData.map((m,i)=>`
+          <tr>
+            <td class="px-6 py-3">${m.data}</td>
+            <td class="px-6 py-3">${m.tipo}</td>
+            <td class="px-6 py-3">${m.descricao}</td>
+            <td class="px-6 py-3">${m.forma}</td>
+            <td class="px-6 py-3">R$ ${Number(m.valor).toFixed(2)}</td>
+            <td class="px-6 py-3">${m.status}</td>
+            <td class="px-6 py-3 flex gap-2">
+              <button onclick="app.editar(${ini+i})" class="px-2 py-1 bg-yellow-400 text-white rounded-md"><ph-pencil-simple size="16"></ph-pencil-simple>Editar</button>
+              <button onclick="app.excluir(${ini+i})" class="px-2 py-1 bg-red-500 text-white rounded-md"><ph-trash size="16"></ph-trash>Exluir</button>
+            </td>
+          </tr>`).join('');
+        pag.classList.remove('hidden');
+        document.getElementById('infoPaginacao').textContent=`Exibindo ${ini+1}–${Math.min(fim,dados.length)} de ${dados.length}`;
+        document.getElementById('btnAnterior').disabled=this.paginaAtual===1;
+        document.getElementById('btnProximo').disabled=fim>=dados.length;
+      }
+
+      renderizarMobile(dados){
+        const cont=document.getElementById('cardsContainer');
+        const empty=document.getElementById('emptyStateMobile');
+        const pag=document.getElementById('paginacaoMobile');
+        if(dados.length===0){
+          cont.innerHTML="";
+          empty.classList.remove('hidden');
+          pag.classList.add('hidden');
+          return;
+        }
+        empty.classList.add('hidden');
+        const ini=(this.paginaAtual-1)*this.registrosPorPagina;
+        const fim=ini+this.registrosPorPagina;
+        const pageData=dados.slice(ini,fim);
+        cont.innerHTML=pageData.map((m,i)=>`
+          <div class="bg-white shadow rounded-lg p-4">
+            <div class="flex justify-between items-center">
+              <span class="text-sm text-gray-500">${m.data}</span>
+              <span class="font-semibold ${m.tipo==='entrada'?'text-green-600':'text-red-600'}">${m.tipo}</span>
+            </div>
+            <p class="mt-2 font-medium">${m.descricao}</p>
+            <p class="text-sm text-gray-600">Forma: ${m.forma}</p>
+            <p class="text-sm text-gray-600">Status: ${m.status}</p>
+            <p class="mt-2 font-bold">R$ ${Number(m.valor).toFixed(2)}</p>
+            <div class="flex gap-2 mt-3">
+              <button onclick="app.editar(${ini+i})" class="flex-1 px-2 py-1 bg-yellow-400 text-white rounded-md"><ph-pencil-simple size="16"></ph-pencil-simple>Editar</button>
+              <button onclick="app.excluir(${ini+i})" class="flex-1 px-2 py-1 bg-red-500 text-white rounded-md"><ph-trash size="16"></ph-trash>Exluir</button>
+            </div>
+          </div>`).join('');
+        pag.classList.remove('hidden');
+        document.getElementById('infoPaginacaoMobile').textContent=`${ini+1}–${Math.min(fim,dados.length)} de ${dados.length}`;
+        document.getElementById('btnAnteriorMobile').disabled=this.paginaAtual===1;
+        document.getElementById('btnProximoMobile').disabled=fim>=dados.length;
+      }
+
+      editar(index){
+        const mov=this.movimentacoes[index];
+        document.getElementById('movIndex').value=index;
+        document.getElementById('movTipo').value=mov.tipo;
+        document.getElementById('movData').value=mov.data;
+        document.getElementById('movDescricao').value=mov.descricao;
+        document.getElementById('movForma').value=mov.forma;
+        document.getElementById('movValor').value=mov.valor;
+        document.getElementById('movStatus').value=mov.status;
+        document.getElementById('modalMovimentacao').classList.remove('hidden');
+        document.getElementById('modalMovimentacao').classList.add('flex');
+      }
+
+      excluir(index){
+        if(confirm("Deseja excluir esta movimentação?")){
+          this.movimentacoes.splice(index,1);
+          this.salvarMovimentacoes();
+          this.renderizar();
+        }
+      }
+
+      configurarEventos(){
+        document.getElementById('filtroTipo').addEventListener('change',()=>this.renderizar());
+        document.getElementById('filtroData').addEventListener('change',()=>this.renderizar());
+        document.getElementById('filtroForma').addEventListener('change',()=>this.renderizar());
+        document.getElementById('btnLimparFiltro').addEventListener('click',()=>{
+          document.getElementById('filtroTipo').value="";
+          document.getElementById('filtroData').value="";
+          document.getElementById('filtroForma').value="";
+          this.renderizar();
+        });
+
+        // Paginação Desktop
+        document.getElementById('selectRegistros').addEventListener('change',(e)=>{this.registrosPorPagina=+e.target.value;this.paginaAtual=1;this.renderizar()});
+        document.getElementById('btnAnterior').addEventListener('click',()=>{if(this.paginaAtual>1){this.paginaAtual--;this.renderizar()}});
+        document.getElementById('btnProximo').addEventListener('click',()=>{this.paginaAtual++;this.renderizar()});
+
+        // Paginação Mobile
+        document.getElementById('selectRegistrosMobile').addEventListener('change',(e)=>{this.registrosPorPagina=+e.target.value;this.paginaAtual=1;this.renderizar()});
+        document.getElementById('btnAnteriorMobile').addEventListener('click',()=>{if(this.paginaAtual>1){this.paginaAtual--;this.renderizar()}});
+        document.getElementById('btnProximoMobile').addEventListener('click',()=>{this.paginaAtual++;this.renderizar()});
+
+        // Nova movimentação
+        const modal=document.getElementById('modalMovimentacao');
+        document.getElementById('btnNovaMovimentacao').addEventListener('click',()=>{
+          document.getElementById('movIndex').value="";
+          document.getElementById('formMovimentacao').reset();
+          modal.classList.remove('hidden');modal.classList.add('flex')
+        });
+        document.getElementById('btnCancelar').addEventListener('click',()=>{modal.classList.add('hidden');modal.classList.remove('flex')});
+        document.getElementById('formMovimentacao').addEventListener('submit',(e)=>{
+          e.preventDefault();
+          const mov={
+            tipo:document.getElementById('movTipo').value,
+            data:document.getElementById('movData').value,
+            descricao:document.getElementById('movDescricao').value,
+            forma:document.getElementById('movForma').value,
+            valor:document.getElementById('movValor').value,
+            status:document.getElementById('movStatus').value,
+          };
+          const index=document.getElementById('movIndex').value;
+          if(index===""){
+            this.movimentacoes.push(mov);
+          }else{
+            this.movimentacoes[index]=mov;
+          }
+          this.salvarMovimentacoes();
+          modal.classList.add('hidden');
+          modal.classList.remove('flex');
+          e.target.reset();
+          this.renderizar();
+        });
+
+        // Exportar
+        document.getElementById('btnExportar').addEventListener('click',()=>{
+          const blob=new Blob([JSON.stringify(this.movimentacoes,null,2)],{type:"application/json"});
+          const url=URL.createObjectURL(blob);
+          const a=document.createElement('a');
+          a.href=url;
+          a.download='movimentacoes.json';
+          a.click();
+          URL.revokeObjectURL(url);
+        });
+
+        // Importar
+        document.getElementById('btnImportar').addEventListener('click',()=>{document.getElementById('inputImportar').click()});
+        document.getElementById('inputImportar').addEventListener('change',(e)=>{
+          const file=e.target.files[0];
+          if(file){
+            const reader=new FileReader();
+            reader.onload=(ev)=>{
+              try{
+                const data=JSON.parse(ev.target.result);
+                if(Array.isArray(data)){
+                  this.movimentacoes=data;
+                  this.salvarMovimentacoes();
+                  this.renderizar();
+                }
+              }catch(err){alert("Arquivo inválido");}
+            };
+            reader.readAsText(file);
+          }
+        });
+      }
+    }
+
+    const app=new ControleFinanceiro();
+  </script>
+</body>
+</html>
